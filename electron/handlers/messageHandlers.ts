@@ -1,6 +1,7 @@
 import { ipcMain } from 'electron';
 import Database from 'better-sqlite3';
 import { getMessages, searchMessages, getTotalMessagesCount, getSearchResultsCount } from '../db/queries';
+import { SecurityService } from '../services/SecurityService';
 
 interface GetMessagesParams {
   chatId: number;
@@ -27,7 +28,10 @@ export function registerMessageHandlers(db: Database.Database) {
         hasMore: offset + messages.length < total
       };
     } catch (error) {
-      console.error('Error fetching messages:', error);
+      console.error('Error fetching messages:', SecurityService.sanitizeForLog({
+        chatId: params.chatId,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      }));
       throw error;
     }
   });
@@ -43,7 +47,11 @@ export function registerMessageHandlers(db: Database.Database) {
         hasMore: offset + messages.length < total
       };
     } catch (error) {
-      console.error('Error searching messages:', error);
+      console.error('Error searching messages:', SecurityService.sanitizeForLog({
+        chatId: params.chatId,
+        searchTerm: params.searchTerm,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      }));
       throw error;
     }
   });

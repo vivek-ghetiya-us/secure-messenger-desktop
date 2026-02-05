@@ -32,6 +32,11 @@ class AppDatabase {
         body TEXT NOT NULL,
         FOREIGN KEY (chatId) REFERENCES chats(id) ON DELETE CASCADE
       );
+
+      -- Performance indexes
+      CREATE INDEX IF NOT EXISTS idx_messages_chatid_ts ON messages(chatId, ts DESC);
+      CREATE INDEX IF NOT EXISTS idx_messages_body ON messages(body);
+      CREATE INDEX IF NOT EXISTS idx_chats_lastmessageat ON chats(lastMessageAt DESC);
     `);
     console.log(`Database initialized at ${this.dbPath}`);
   }

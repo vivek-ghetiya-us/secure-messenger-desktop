@@ -23,7 +23,8 @@ export function getChats(
   offset: number = 0,
 ): Chat[] {
   const stmt = db.prepare(`
-    SELECT * FROM chats
+    SELECT id, title, lastMessageAt, unreadCount, createdAt, updatedAt
+    FROM chats
     ORDER BY lastMessageAt DESC
     LIMIT ? OFFSET ?
   `);
@@ -66,7 +67,8 @@ export function getMessages(
   offset: number = 0,
 ): Message[] {
   const stmt = db.prepare(`
-    SELECT * FROM messages
+    SELECT id, chatId, ts, sender, body
+    FROM messages
     WHERE chatId = ?
     ORDER BY ts DESC
     LIMIT ? OFFSET ?
@@ -92,7 +94,8 @@ export function searchMessages(
   offset: number = 0,
 ): Message[] {
   const stmt = db.prepare(`
-    SELECT * FROM messages
+    SELECT id, chatId, ts, sender, body
+    FROM messages
     WHERE chatId = ? AND body LIKE ?
     ORDER BY ts DESC
     LIMIT ? OFFSET ?
@@ -114,7 +117,7 @@ export function insertMessage(
   const info = stmt.run(chatId, sender, body, ts);
 
   // Get the inserted message
-  const getStmt = db.prepare("SELECT * FROM messages WHERE id = ?");
+  const getStmt = db.prepare("SELECT id, chatId, ts, sender, body FROM messages WHERE id = ?");
   return getStmt.get(info.lastInsertRowid) as Message;
 }
 

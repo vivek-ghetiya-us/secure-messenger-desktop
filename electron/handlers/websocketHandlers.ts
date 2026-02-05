@@ -3,6 +3,8 @@ import Database from 'better-sqlite3';
 import { WebSocketClient } from '../websocket/client';
 import { MessageSimulatorServer } from '../websocket/server';
 import { insertMessage, updateChatOnNewMessage } from '../db/queries';
+import { validateWebSocketMessage } from '../websocket/validation';
+import { SecurityService } from '../services/SecurityService';
 
 export function registerWebSocketHandlers(
   db: Database.Database,
@@ -22,21 +24,27 @@ export function registerWebSocketHandlers(
   });
 
   wsClient.on('message', (event) => {
-    if (event.type !== 'new-message') return;
+    // Validate message structure
+    if (!validateWebSocketMessage(event)) {
+      console.error('[WS] Invalid message structure:', SecurityService.sanitizeForLog(event));
+      return;
+    }
 
     const { chatId, ts, sender, body } = event.data;
+
     try {
       const message = insertMessage(db, chatId, sender, body, ts);
       updateChatOnNewMessage(db, chatId, ts, null);
       win.webContents.send('ws:message-received', { message, chatId });
+
+      console.log('[WS] Message processed:', SecurityService.sanitizeForLog({ chatId, sender, ts }));
     } catch (error) {
-      // Log error without exposing message content
-      console.error('[WS] Error processing message:', {
+      console.error('[WS] Error processing message:', SecurityService.sanitizeForLog({
         chatId,
         sender,
         ts,
         error: error instanceof Error ? error.message : 'Unknown error'
-      });
+      }));
     }
   });
 }

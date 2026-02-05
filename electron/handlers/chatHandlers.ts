@@ -2,6 +2,7 @@ import { ipcMain } from "electron";
 import Database from "better-sqlite3";
 import { getChats, markChatAsRead, getTotalChatsCount } from "../db/queries";
 import { seedDatabase } from "../db/seed";
+import { SecurityService } from "../services/SecurityService";
 
 interface GetChatsParams {
   limit?: number;
@@ -16,7 +17,9 @@ export function registerChatHandlers(db: Database.Database) {
       const total = getTotalChatsCount(db);
       return { chats, total, hasMore: offset + chats.length < total };
     } catch (error) {
-      console.error("Error fetching chats:", error);
+      console.error("Error fetching chats:", SecurityService.sanitizeForLog({
+        error: error instanceof Error ? error.message : 'Unknown error'
+      }));
       throw error;
     }
   });
@@ -26,7 +29,10 @@ export function registerChatHandlers(db: Database.Database) {
       markChatAsRead(db, chatId);
       return { success: true };
     } catch (error) {
-      console.error("Error marking chat as read:", error);
+      console.error("Error marking chat as read:", SecurityService.sanitizeForLog({
+        chatId,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      }));
       throw error;
     }
   });
@@ -36,7 +42,9 @@ export function registerChatHandlers(db: Database.Database) {
       seedDatabase();
       return { success: true };
     } catch (error) {
-      console.error("Error seeding database:", error);
+      console.error("Error seeding database:", SecurityService.sanitizeForLog({
+        error: error instanceof Error ? error.message : 'Unknown error'
+      }));
       throw error;
     }
   });

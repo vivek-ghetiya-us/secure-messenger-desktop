@@ -15,6 +15,9 @@ const __dirname = path.dirname(__filename);
 
 process.env.APP_ROOT = path.join(__dirname, "..");
 
+const NODE_ENV = process.env.NODE_ENV || "development";
+const WS_SERVER_URL = process.env.VITE_WS_SERVER_URL || "ws://localhost:8080";
+
 export const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"];
 export const MAIN_DIST = path.join(process.env.APP_ROOT, "dist-electron");
 export const RENDERER_DIST = path.join(process.env.APP_ROOT, "dist");
@@ -77,12 +80,16 @@ app.on("activate", () => {
 app.whenReady().then(() => {
   db = new AppDatabase();
 
-  // Initialize WebSocket server
-  wsServer = new MessageSimulatorServer(db.db, 8080);
-  console.log("WebSocket server started on ws://localhost:8080");
+  // Start WebSocket server only in development
+  if (NODE_ENV === "development") {
+    const wsPort = parseInt(WS_SERVER_URL.split(":").pop() || "8080", 10);
+    wsServer = new MessageSimulatorServer(db.db, wsPort);
+    console.log(`[WS Server] Started on ${WS_SERVER_URL}`);
+  }
 
   // Initialize WebSocket client
-  wsClient = new WebSocketClient("ws://localhost:8080");
+  wsClient = new WebSocketClient(WS_SERVER_URL);
+  console.log(`[WS Client] Connecting to ${WS_SERVER_URL}`);
 
   createWindow();
 

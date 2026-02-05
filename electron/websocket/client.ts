@@ -1,5 +1,6 @@
 import WebSocket from "ws";
 import { EventEmitter } from "events";
+import { SecurityService } from "../services/SecurityService";
 
 export type ConnectionState = "connected" | "reconnecting" | "offline";
 
@@ -11,7 +12,7 @@ export class WebSocketClient extends EventEmitter {
   heartbeat?: NodeJS.Timeout;
   reconnectTimer?: NodeJS.Timeout;
 
-  constructor(url = "ws://localhost:8080") {
+  constructor(url: string) {
     super();
     this.url = url;
   }
@@ -64,7 +65,9 @@ export class WebSocketClient extends EventEmitter {
     });
 
     this.ws.on("error", (error) => {
-      console.error("[WS Client] Error:", error);
+      console.error("[WS Client] Error:", SecurityService.sanitizeForLog({
+        error: error instanceof Error ? error.message : 'Unknown error'
+      }));
     });
   }
 
