@@ -11,9 +11,16 @@
     "postinstall": "electron-rebuild"
   },
   "dependencies": {
+    "@emotion/react": "11.14.0",
+    "@emotion/styled": "11.14.1",
+    "@mui/icons-material": "7.3.7",
+    "@mui/material": "7.3.7",
+    "@reduxjs/toolkit": "2.11.2",
     "better-sqlite3": "12.6.2",
     "react": "18.2.0",
     "react-dom": "18.2.0",
+    "react-redux": "9.2.0",
+    "react-window": "2.2.6",
     "ws": "8.19.0"
   },
   "devDependencies": {
@@ -21,6 +28,7 @@
     "@types/better-sqlite3": "7.6.13",
     "@types/react": "18.2.64",
     "@types/react-dom": "18.2.21",
+    "@types/react-window": "^1.8.8",
     "@types/ws": "8.18.1",
     "@typescript-eslint/eslint-plugin": "7.1.1",
     "@typescript-eslint/parser": "7.1.1",
