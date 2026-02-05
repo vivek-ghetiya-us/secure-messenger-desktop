@@ -85,12 +85,14 @@ export function seedDatabase() {
     }
 
     // Create messages for this chat
+    // SECURITY NOTE: In production, message bodies would be encrypted before storing
     for (let j = 0; j < messageCount; j++) {
       const sender = Math.random() > 0.5 ? "me" : `${random(FIRST_NAMES)} ${random(LAST_NAMES)}`;
       const body = random(MESSAGES);
       const hoursAgo = Math.floor(Math.random() * 720); // Last 30 days
       const ts = new Date(now - hoursAgo * 60 * 60 * 1000).toISOString();
 
+      // In production: body = SecurityService.encrypt(body)
       db.prepare("INSERT INTO messages (chatId, sender, body, ts) VALUES (?, ?, ?, ?)")
         .run(chatId, sender, body, ts);
 

@@ -4,6 +4,8 @@ export enum IpcChannel {
   MARK_CHAT_AS_READ = 'db:mark-chat-as-read',
   SEARCH_MESSAGES = 'db:search-messages',
   SEED_DATABASE = 'db:seed-database',
+  WS_GET_STATUS = 'ws:get-status',
+  WS_SIMULATE_DROP = 'ws:simulate-drop',
 }
 
 export interface GetChatsParams {
@@ -21,6 +23,7 @@ export interface SearchMessagesParams {
   chatId: number;
   searchTerm: string;
   limit?: number;
+  offset?: number;
 }
 
 export interface MarkChatAsReadParams {

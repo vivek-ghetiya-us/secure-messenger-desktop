@@ -3,8 +3,12 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 import AppDatabase from "./db/database";
 import { registerAllHandlers } from "./handlers";
+import { WebSocketClient } from "./websocket/client";
+import { MessageSimulatorServer } from "./websocket/server";
 
 let db: AppDatabase;
+let wsServer: MessageSimulatorServer;
+let wsClient: WebSocketClient;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -55,6 +59,15 @@ app.on("window-all-closed", () => {
   }
 });
 
+app.on("before-quit", () => {
+  if (wsClient) {
+    wsClient.disconnect();
+  }
+  if (wsServer) {
+    wsServer.close();
+  }
+});
+
 app.on("activate", () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
@@ -63,6 +76,19 @@ app.on("activate", () => {
 
 app.whenReady().then(() => {
   db = new AppDatabase();
-  registerAllHandlers(db.db);
+
+  // Initialize WebSocket server
+  wsServer = new MessageSimulatorServer(db.db, 8080);
+  console.log("WebSocket server started on ws://localhost:8080");
+
+  // Initialize WebSocket client
+  wsClient = new WebSocketClient("ws://localhost:8080");
+
   createWindow();
+
+  // Register all handlers (pass WebSocket components and window)
+  registerAllHandlers(db.db, wsClient, wsServer, win!);
+
+  // Connect WebSocket client
+  wsClient.connect();
 });

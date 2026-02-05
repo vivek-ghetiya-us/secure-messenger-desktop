@@ -1,6 +1,6 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { ChatsState } from '../../types/chat.types';
-import { ipcService } from '../../services/ipc';
+import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
+import { ChatsState } from "../../types/chat.types";
+import { ipcService } from "../../services/ipc";
 
 const initialState: ChatsState & { hasMore: boolean; total: number } = {
   items: [],
@@ -10,33 +10,59 @@ const initialState: ChatsState & { hasMore: boolean; total: number } = {
   total: 0,
 };
 
-// Fetch chats with pagination
-export const fetchChats = createAsyncThunk('chats/fetch', async (params?: { limit?: number; offset?: number }) => {
-  return await ipcService.getChats(params);
-});
+export const fetchChats = createAsyncThunk(
+  "chats/fetch",
+  async (params?: { limit?: number; offset?: number }) => {
+    return await ipcService.getChats(params);
+  },
+);
 
-// Load more chats
-export const loadMoreChats = createAsyncThunk('chats/loadMore', async (params: { limit: number; offset: number }) => {
-  return await ipcService.getChats(params);
-});
+export const loadMoreChats = createAsyncThunk(
+  "chats/loadMore",
+  async (params: { limit: number; offset: number }) => {
+    return await ipcService.getChats(params);
+  },
+);
 
-// Mark chat as read
-export const markAsRead = createAsyncThunk('chats/markAsRead', async (chatId: number) => {
-  await ipcService.markChatAsRead(chatId);
-  return chatId;
-});
+export const markAsRead = createAsyncThunk(
+  "chats/markAsRead",
+  async (chatId: number) => {
+    await ipcService.markChatAsRead(chatId);
+    return chatId;
+  },
+);
 
-// Seed database
-export const seedDatabase = createAsyncThunk('chats/seed', async () => {
+export const seedDatabase = createAsyncThunk("chats/seed", async () => {
   await ipcService.seedDatabase();
 });
 
 const chatsSlice = createSlice({
-  name: 'chats',
+  name: "chats",
   initialState,
-  reducers: {},
+  reducers: {
+    updateChatFromWS: (
+      state,
+      action: PayloadAction<{
+        chatId: number;
+        lastMessageAt: string;
+        unreadCount: number;
+      }>,
+    ) => {
+      const chat = state.items.find((c) => c.id === action.payload.chatId);
+      if (chat) {
+        chat.lastMessageAt = action.payload.lastMessageAt;
+        chat.unreadCount = action.payload.unreadCount;
+
+        // Re-sort chats by lastMessageAt
+        state.items.sort(
+          (a, b) =>
+            new Date(b.lastMessageAt).getTime() -
+            new Date(a.lastMessageAt).getTime(),
+        );
+      }
+    },
+  },
   extraReducers: (builder) => {
-    // Fetch chats
     builder.addCase(fetchChats.pending, (state) => {
       state.loading = true;
       state.error = null;
@@ -49,23 +75,20 @@ const chatsSlice = createSlice({
     });
     builder.addCase(fetchChats.rejected, (state, action) => {
       state.loading = false;
-      state.error = action.error.message || 'Failed to fetch chats';
+      state.error = action.error.message || "Failed to fetch chats";
     });
 
-    // Load more chats
     builder.addCase(loadMoreChats.fulfilled, (state, action) => {
       state.items.push(...action.payload.chats);
       state.hasMore = action.payload.hasMore;
       state.total = action.payload.total;
     });
 
-    // Mark as read
     builder.addCase(markAsRead.fulfilled, (state, action) => {
       const chat = state.items.find((c) => c.id === action.payload);
       if (chat) chat.unreadCount = 0;
     });
 
-    // Seed database
     builder.addCase(seedDatabase.pending, (state) => {
       state.loading = true;
     });
@@ -75,4 +98,5 @@ const chatsSlice = createSlice({
   },
 });
 
+export const { updateChatFromWS } = chatsSlice.actions;
 export default chatsSlice.reducer;

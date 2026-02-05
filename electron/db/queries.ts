@@ -36,6 +36,29 @@ export function getTotalChatsCount(db: Database.Database): number {
   return result.count;
 }
 
+export function getTotalMessagesCount(
+  db: Database.Database,
+  chatId: number,
+): number {
+  const stmt = db.prepare(
+    "SELECT COUNT(*) as count FROM messages WHERE chatId = ?",
+  );
+  const result = stmt.get(chatId) as { count: number };
+  return result.count;
+}
+
+export function getSearchResultsCount(
+  db: Database.Database,
+  chatId: number,
+  searchTerm: string,
+): number {
+  const stmt = db.prepare(
+    "SELECT COUNT(*) as count FROM messages WHERE chatId = ? AND body LIKE ?",
+  );
+  const result = stmt.get(chatId, `%${searchTerm}%`) as { count: number };
+  return result.count;
+}
+
 export function getMessages(
   db: Database.Database,
   chatId: number,
@@ -66,12 +89,51 @@ export function searchMessages(
   chatId: number,
   searchTerm: string,
   limit: number = 50,
+  offset: number = 0,
 ): Message[] {
   const stmt = db.prepare(`
     SELECT * FROM messages
     WHERE chatId = ? AND body LIKE ?
     ORDER BY ts DESC
-    LIMIT ?
+    LIMIT ? OFFSET ?
   `);
-  return stmt.all(chatId, `%${searchTerm}%`, limit) as Message[];
+  return stmt.all(chatId, `%${searchTerm}%`, limit, offset) as Message[];
+}
+
+export function insertMessage(
+  db: Database.Database,
+  chatId: number,
+  sender: string,
+  body: string,
+  ts: string,
+): Message {
+  const stmt = db.prepare(`
+    INSERT INTO messages (chatId, sender, body, ts)
+    VALUES (?, ?, ?, ?)
+  `);
+  const info = stmt.run(chatId, sender, body, ts);
+
+  // Get the inserted message
+  const getStmt = db.prepare("SELECT * FROM messages WHERE id = ?");
+  return getStmt.get(info.lastInsertRowid) as Message;
+}
+
+export function updateChatOnNewMessage(
+  db: Database.Database,
+  chatId: number,
+  lastMessageAt: string,
+  selectedChatId: number | null,
+): void {
+  // Only increment unread if chat is not currently selected
+  const shouldIncrement = selectedChatId !== chatId;
+
+  const stmt = db.prepare(`
+    UPDATE chats
+    SET lastMessageAt = ?,
+        unreadCount = unreadCount + ?,
+        updatedAt = CURRENT_TIMESTAMP
+    WHERE id = ?
+  `);
+
+  stmt.run(lastMessageAt, shouldIncrement ? 1 : 0, chatId);
 }

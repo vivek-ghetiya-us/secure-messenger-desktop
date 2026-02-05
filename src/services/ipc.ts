@@ -13,11 +13,11 @@ export const ipcService = {
     return window.ipcRenderer.invoke(IpcChannel.GET_CHATS, params);
   },
 
-  async getMessages(params: GetMessagesParams): Promise<Message[]> {
+  async getMessages(params: GetMessagesParams): Promise<{ messages: Message[]; total: number; hasMore: boolean }> {
     return window.ipcRenderer.invoke(IpcChannel.GET_MESSAGES, params);
   },
 
-  async searchMessages(params: SearchMessagesParams): Promise<Message[]> {
+  async searchMessages(params: SearchMessagesParams): Promise<{ messages: Message[]; total: number; hasMore: boolean }> {
     return window.ipcRenderer.invoke(IpcChannel.SEARCH_MESSAGES, params);
   },
 
@@ -27,5 +27,13 @@ export const ipcService = {
 
   async seedDatabase(): Promise<void> {
     return window.ipcRenderer.invoke(IpcChannel.SEED_DATABASE);
+  },
+
+  async getConnectionStatus(): Promise<{ status: string }> {
+    return window.ipcRenderer.invoke(IpcChannel.WS_GET_STATUS);
+  },
+
+  async simulateConnectionDrop(): Promise<void> {
+    return window.ipcRenderer.invoke(IpcChannel.WS_SIMULATE_DROP);
   },
 };
