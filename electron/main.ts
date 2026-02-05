@@ -1,8 +1,12 @@
 import { app, BrowserWindow } from "electron";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
+import AppDatabase from "./db/database";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+let db: AppDatabase;
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 process.env.APP_ROOT = path.join(__dirname, "..");
 
@@ -50,4 +54,7 @@ app.on("activate", () => {
   }
 });
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  db = new AppDatabase();
+  createWindow();
+});

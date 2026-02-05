@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc && vite build && electron-builder",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "postinstall": "electron-rebuild"
   },
   "dependencies": {
     "better-sqlite3": "12.6.2",
@@ -16,6 +17,8 @@
     "ws": "8.19.0"
   },
   "devDependencies": {
+    "@electron/rebuild": "4.0.3",
+    "@types/better-sqlite3": "7.6.13",
     "@types/react": "18.2.64",
     "@types/react-dom": "18.2.21",
     "@types/ws": "8.18.1",
